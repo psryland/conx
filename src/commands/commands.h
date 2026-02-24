@@ -31,6 +31,7 @@ namespace conx
 	x("send_keys", "Send key presses to a window", SendKeys)\
 	x("send_mouse", "Send mouse events to a window", SendMouse)\
 	x("shutdown_process", "Gracefully shut down a process", ShutdownProcess)\
+	x("shcopy,shmove,shrename,shdelete", "Shell file operations (copy/move/rename/delete)", ShFileOp)\
 	x("wait_window", "Wait for a window to appear", WaitWindow)\
 	x("wait", "Wait for a specified length of time", Wait)
 

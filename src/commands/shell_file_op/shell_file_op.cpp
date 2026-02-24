@@ -8,89 +8,63 @@ namespace conx
 {
 	struct Cmd_ShFileOp
 	{
-		struct Read
+		// Build a double-null-terminated path list from a comma-separated string
+		static char const* BuildPathList(std::string const& arg, std::string& buf)
 		{
-			static char* Paths(std::string const& arg, std::string& var)
+			buf.clear();
+			pr::str::Split(arg, ",", [&](auto sub, int)
 			{
-				var.clear();
-				std::vector<std::string> paths;
-				pr::str::Split(arg, ",", [&](auto sub, int) { paths.push_back(std::string(sub)); });
-				for (auto const& p : paths) var.append(std::filesystem::absolute(p).string()).push_back('\0');
-				var.push_back('\0');
-				return &var[0];
-			}
-			static void Flags(std::string const& arg, FILEOP_FLAGS& var)
+				buf.append(std::filesystem::absolute(std::string(sub)).string());
+				buf.push_back('\0');
+			});
+			buf.push_back('\0');
+			return buf.c_str();
+		}
+
+		// Parse a comma-separated flags string into FILEOP_FLAGS
+		static FILEOP_FLAGS ParseFlags(std::string const& arg)
+		{
+			FILEOP_FLAGS flags = 0;
+			pr::str::Split(arg, ",", [&](auto sub, int)
 			{
-				var = 0;
-				std::vector<std::string> flags;
-				pr::str::Split(arg, ",", [&](auto sub, int) { flags.push_back(std::string(sub)); });
-				for (std::vector<std::string>::const_iterator i = flags.begin(), iend = flags.end(); i != iend; ++i)
-				{
-					if (pr::str::EqualI(*i, "AllowUndo"))            { var |= FOF_ALLOWUNDO;             continue;}
-					if (pr::str::EqualI(*i, "FilesOnly"))            { var |= FOF_FILESONLY;             continue;}
-					if (pr::str::EqualI(*i, "MultiDestFiles"))       { var |= FOF_MULTIDESTFILES;        continue;}
-					if (pr::str::EqualI(*i, "NoConfirmation"))       { var |= FOF_NOCONFIRMATION;        continue;}
-					if (pr::str::EqualI(*i, "NoConfirmMkDir"))       { var |= FOF_NOCONFIRMMKDIR;        continue;}
-					if (pr::str::EqualI(*i, "NoConnectedElements"))  { var |= FOF_NO_CONNECTED_ELEMENTS; continue;}
-					if (pr::str::EqualI(*i, "NoCopySecurityAttribs")){ var |= FOF_NOCOPYSECURITYATTRIBS; continue;}
-					if (pr::str::EqualI(*i, "NoErrorUI"))            { var |= FOF_NOERRORUI;             continue;}
-					if (pr::str::EqualI(*i, "NoRecursion"))          { var |= FOF_NORECURSION;           continue;}
-					if (pr::str::EqualI(*i, "NoUI"))                 { var |= FOF_NO_UI;                 continue;}
-					if (pr::str::EqualI(*i, "RenameOnCollision"))    { var |= FOF_RENAMEONCOLLISION;     continue;}
-					if (pr::str::EqualI(*i, "Silent"))               { var |= FOF_SILENT;                continue;}
-					if (pr::str::EqualI(*i, "SimpleProgress"))       { var |= FOF_SIMPLEPROGRESS;        continue;}
-					if (pr::str::EqualI(*i, "WantNukeWarning"))      { var |= FOF_WANTNUKEWARNING;       continue;}
-				}
-			}
-		};
+				auto s = std::string(sub);
+				if (pr::str::EqualI(s, "AllowUndo"))             flags |= FOF_ALLOWUNDO;
+				else if (pr::str::EqualI(s, "FilesOnly"))        flags |= FOF_FILESONLY;
+				else if (pr::str::EqualI(s, "MultiDestFiles"))   flags |= FOF_MULTIDESTFILES;
+				else if (pr::str::EqualI(s, "NoConfirmation"))   flags |= FOF_NOCONFIRMATION;
+				else if (pr::str::EqualI(s, "NoConfirmMkDir"))   flags |= FOF_NOCONFIRMMKDIR;
+				else if (pr::str::EqualI(s, "NoConnectedElements")) flags |= FOF_NO_CONNECTED_ELEMENTS;
+				else if (pr::str::EqualI(s, "NoCopySecurityAttribs")) flags |= FOF_NOCOPYSECURITYATTRIBS;
+				else if (pr::str::EqualI(s, "NoErrorUI"))        flags |= FOF_NOERRORUI;
+				else if (pr::str::EqualI(s, "NoRecursion"))      flags |= FOF_NORECURSION;
+				else if (pr::str::EqualI(s, "NoUI"))             flags |= FOF_NO_UI;
+				else if (pr::str::EqualI(s, "RenameOnCollision")) flags |= FOF_RENAMEONCOLLISION;
+				else if (pr::str::EqualI(s, "Silent"))           flags |= FOF_SILENT;
+				else if (pr::str::EqualI(s, "SimpleProgress"))   flags |= FOF_SIMPLEPROGRESS;
+				else if (pr::str::EqualI(s, "WantNukeWarning"))  flags |= FOF_WANTNUKEWARNING;
+				else std::cerr << std::format("Unknown flag: '{}'\n", s);
+			});
+			return flags;
+		}
 
 		void ShowHelp() const
 		{
 			std::cout <<
-R"(Shell File Operation : Perform a file operation using the windows explorer shell
-	 Syntax: Conx -shcopy|-shmove|-shrename|-shdelete [options]
-	  -shcopy   src_file1,src_file2,... dst_path0,dst_path1,... [-flags flag0,flag1] [-title title]
-	  -shmove   src_file1,src_file2,... dst_path0,dst_path1,... [-flags flag0,flag1] [-title title]
-	  -shrename src_file1,src_file2,... dst_path0,dst_path1,... [-flags flag0,flag1] [-title title]
-	  -shdelete src_file1,src_file2,... [-flags flag0,flag1] [-title title]
-		 src_files : Standard MS-DOS wildcard characters, such as '*', are permitted
-					 only in the file-name position. Using a wildcard character elsewhere
-					 in the string will lead to unpredictable results.
-		 dst_path  : Wildcard characters are not supported.
-					 Copy and Move operations can specify destination directories that do
-					 not exist. In those cases, the system attempts to create them and normally
-					 displays a dialog box to ask the user if they want to create the new directory.
-					 To suppress this dialog box and have the directories created silently, set the
-					 NoConfirmMkDir flag in -flags.
-					 For Copy and Move operations, the buffer can contain multiple destination file
-					 names if the -flags member specifies MultiDestFiles.
-		 flags     : AllowUndo - Preserve undo information, if possible.
-					 FilesOnly - Perform the operation only on files (not on folders) if a wildcard
-								 file name (*.*) is specified.
-					 MultiDestFiles - The dst_path list specifies multiple destination files (one for
-								 each source file in src_files) rather than one directory where
-								 all source files are to be deposited.
-					 NoConfirmation - Respond with Yes to All for any dialog box that is displayed.
-					 NoConfirmMkDir - Do not ask the user to confirm the creation of a new directory
-								 if the operation requires one to be created.
-					 NoConnectedElements - WinVer 5.0. Do not move connected files as a group.
-								 Only move the specified files.
-					 NoCopySecurityAttribs - WinVer 4.71. Do not copy the security attributes of the file.
-								 The destination file receives the security attributes of its new folder.
-					 NoErrorUI - Do not display a dialog to the user if an error occurs.
-					 NoRecursion - Only perform the operation in the local directory. Do not operate
-								 recursively into subdirectories, which is the default behavior.
-					 NoUI - WinVer 6.0.6060 (Windows Vista). Perform the operation silently, presenting
-								 no UI to the user. This is equivalent to Silent,NoConfirmation,NoErrorUI,NoConfirmMkDir.
-					 RenameOnCollision - Give the file being operated on a new name in a move, copy, or rename
-								 operation if a file with the target name already exists at the destination.
-					 Silent - Do not display a progress dialog box.
-					 SimpleProgress - Display a progress dialog box but do not show individual file names
-								 as they are operated on.
-					 WantNukeWarning - WinVer 5.0. Send a warning if a file is being permanently destroyed
-								 during a delete operation rather than recycled. This flag partially overrides NoConfirmation.
-		 title     : A title to display on progress dialogs
-	)";
+R"(Shell File Operation: Perform a file operation using the Windows Explorer shell
+ Syntax: Conx -shcopy|-shmove|-shrename src,... dst,... [-flags flag,...] [-title "text"]
+         Conx -shdelete src,... [-flags flag,...] [-title "text"]
+  -shcopy   : Copy files from source(s) to destination(s)
+  -shmove   : Move files from source(s) to destination(s)
+  -shrename : Rename files
+  -shdelete : Delete files (to recycle bin with AllowUndo flag)
+  -flags    : Comma-separated flags: AllowUndo, FilesOnly, MultiDestFiles,
+              NoConfirmation, NoConfirmMkDir, NoConnectedElements,
+              NoCopySecurityAttribs, NoErrorUI, NoRecursion, NoUI,
+              RenameOnCollision, Silent, SimpleProgress, WantNukeWarning
+  -title    : Title for the progress dialog
+
+ Returns 0 on success, 1 if aborted, or a SHFileOperation error code.
+)";
 		}
 
 		int Run(pr::CmdLine const& args)
@@ -98,38 +72,65 @@ R"(Shell File Operation : Perform a file operation using the windows explorer sh
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
 
-			#if 0
+			SHFILEOPSTRUCTA fo = {};
+			std::string src_buf, dst_buf;
+
+			// Determine the operation
 			if (args.count("shcopy") != 0)
 			{
+				fo.wFunc = FO_COPY;
 				auto const& arg = args("shcopy");
-				for (int i = 0, n = arg.num_values(); i < n; i += 2)
-				{
-					SHFILEOPSTRUCTA m_fo = {
-						.wFunc = FO_COPY,
-						.pFrom = Read::Paths(arg.values[i+0], m_src),
-						.pTo = Read::Paths(arg.values[i+1], m_dst),
-					};
-					std::string m_src, m_dst, m_title;
-				}
-
-
-
+				if (arg.num_values() < 2) { std::cerr << "-shcopy requires source and destination paths\n"; return ShowHelp(), -1; }
+				fo.pFrom = BuildPathList(arg.values[0], src_buf);
+				fo.pTo = BuildPathList(arg.values[1], dst_buf);
 			}
-			
-				if (pr::str::EqualI(option, "-shmove"  ) && arg_end - arg >= 2) { m_fo.wFunc = FO_MOVE;   m_fo.pFrom = Read::Paths(*arg, m_src); m_fo.pTo = Read::Paths(*(arg+1), m_dst); arg += 2; return true; }
-				if (pr::str::EqualI(option, "-shrename") && arg_end - arg >= 2) { m_fo.wFunc = FO_RENAME; m_fo.pFrom = Read::Paths(*arg, m_src); m_fo.pTo = Read::Paths(*(arg+1), m_dst); arg += 2; return true; }
-				if (pr::str::EqualI(option, "-shdelete") && arg_end - arg >= 1) { m_fo.wFunc = FO_DELETE; m_fo.pFrom = Read::Paths(*arg, m_src); m_fo.pTo = 0;                            arg += 1; return true; }
-				if (pr::str::EqualI(option, "-flags"   ) && arg_end - arg >= 1) { Read::Flags(*arg, m_fo.fFlags); arg += 1; return true; }
-				if (pr::str::EqualI(option, "-title"   ) && arg_end - arg >= 1) { m_title = *arg++; m_fo.lpszProgressTitle = m_title.c_str(); return true; }
-				return ICex::CmdLineOption(option, arg, arg_end);
+			else if (args.count("shmove") != 0)
+			{
+				fo.wFunc = FO_MOVE;
+				auto const& arg = args("shmove");
+				if (arg.num_values() < 2) { std::cerr << "-shmove requires source and destination paths\n"; return ShowHelp(), -1; }
+				fo.pFrom = BuildPathList(arg.values[0], src_buf);
+				fo.pTo = BuildPathList(arg.values[1], dst_buf);
+			}
+			else if (args.count("shrename") != 0)
+			{
+				fo.wFunc = FO_RENAME;
+				auto const& arg = args("shrename");
+				if (arg.num_values() < 2) { std::cerr << "-shrename requires source and destination paths\n"; return ShowHelp(), -1; }
+				fo.pFrom = BuildPathList(arg.values[0], src_buf);
+				fo.pTo = BuildPathList(arg.values[1], dst_buf);
+			}
+			else if (args.count("shdelete") != 0)
+			{
+				fo.wFunc = FO_DELETE;
+				auto const& arg = args("shdelete");
+				if (arg.num_values() < 1) { std::cerr << "-shdelete requires source paths\n"; return ShowHelp(), -1; }
+				fo.pFrom = BuildPathList(arg.values[0], src_buf);
+			}
+			else
+			{
+				std::cerr << "No shell operation specified\n";
+				return ShowHelp(), -1;
+			}
 
-			// Returns 0 for success, 1 for aborted, or an error code
-			// Note: This is not a GetLastError() error code. See the docs for SHFileOperation()
-			int res = SHFileOperationA(&m_fo);
-			if (res == 0) res = m_fo.fAnyOperationsAborted;
+			// Parse optional flags and title
+			if (args.count("flags") != 0)
+				fo.fFlags = ParseFlags(args("flags").as<std::string>());
+
+			std::string title;
+			if (args.count("title") != 0)
+			{
+				title = args("title").as<std::string>();
+				fo.lpszProgressTitle = title.c_str();
+			}
+
+			// Execute the operation.
+			// Returns 0 for success, or an error code. See SHFileOperation docs.
+			int res = SHFileOperationA(&fo);
+			if (res == 0)
+				res = fo.fAnyOperationsAborted ? 1 : 0;
+
 			return res;
-			#endif
-			throw std::runtime_error("Not implemented");
 		}
 	};
 

@@ -400,6 +400,30 @@ No parameters. Outputs complete command reference to stdout.
 
 ---
 
+### shcopy / shmove / shrename / shdelete
+
+Perform file operations using the Windows Explorer shell (SHFileOperation).
+
+```
+conx -shcopy src,... dst,... [-flags flag,...] [-title "text"]
+conx -shmove src,... dst,... [-flags flag,...] [-title "text"]
+conx -shrename src,... dst,... [-flags flag,...] [-title "text"]
+conx -shdelete src,... [-flags flag,...] [-title "text"]
+```
+
+| Parameter   | Required | Description |
+|-------------|----------|-------------|
+| src         | Yes      | Comma-separated source paths (wildcards allowed in filename) |
+| dst         | Yes*     | Comma-separated destination paths (*not needed for delete) |
+| `-flags`    | No       | Comma-separated flags (see below) |
+| `-title`    | No       | Title for the progress dialog |
+
+**Flags:** `AllowUndo`, `FilesOnly`, `MultiDestFiles`, `NoConfirmation`, `NoConfirmMkDir`, `NoConnectedElements`, `NoCopySecurityAttribs`, `NoErrorUI`, `NoRecursion`, `NoUI`, `RenameOnCollision`, `Silent`, `SimpleProgress`, `WantNukeWarning`
+
+**Returns:** 0 on success, 1 if aborted, or a SHFileOperation error code.
+
+---
+
 ## Notes
 
 - conx is a Windows subsystem application (no console window by default). When run from a console (cmd/PowerShell), it attaches to the parent console for stdout/stderr.
