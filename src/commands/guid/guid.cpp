@@ -4,9 +4,6 @@
 //**********************************************
 #include "src/forward.h"
 
-#include <objbase.h>
-#pragma comment(lib, "ole32.lib")
-
 namespace conx
 {
 	struct Cmd_Guid
@@ -18,7 +15,7 @@ namespace conx
 				" Syntax: Conx -guid\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -35,7 +32,7 @@ namespace conx
 		}
 	};
 
-	int Guid(pr::CmdLine const& args)
+	int Guid(CmdLine const& args)
 	{
 		Cmd_Guid cmd;
 		return cmd.Run(args);

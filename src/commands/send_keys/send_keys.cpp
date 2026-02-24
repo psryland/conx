@@ -22,7 +22,7 @@ namespace conx
 				"  hardware-level key simulation. Works with all applications.\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -87,7 +87,7 @@ namespace conx
 		}
 	};
 
-	int SendKeys(pr::CmdLine const& args)
+	int SendKeys(CmdLine const& args)
 	{
 		Cmd_SendKeys cmd;
 		return cmd.Run(args);

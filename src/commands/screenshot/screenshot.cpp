@@ -31,7 +31,7 @@ namespace conx
 				"  Duplicate names are suffixed with -1, -2, etc.\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -248,7 +248,7 @@ namespace conx
 		}
 	};
 
-	int Screenshot(pr::CmdLine const& args)
+	int Screenshot(CmdLine const& args)
 	{
 		Cmd_Screenshot cmd;
 		return cmd.Run(args);

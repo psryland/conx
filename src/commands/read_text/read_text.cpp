@@ -172,7 +172,7 @@ namespace conx
 				"  Outputs the element tree with names, control types, and text values.\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -221,7 +221,7 @@ namespace conx
 		}
 	};
 
-	int ReadText(pr::CmdLine const& args)
+	int ReadText(CmdLine const& args)
 	{
 		Cmd_ReadText cmd;
 		return cmd.Run(args);

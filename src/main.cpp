@@ -4,8 +4,8 @@
 //**********************************************
 #include "src/forward.h"
 #include "src/commands/commands.h"
-
-using namespace pr;
+#include "src/common/process_util.h"
+#include "src/common/cmd_line.h"
 
 namespace conx
 {
@@ -22,7 +22,7 @@ namespace conx
 		int Run(CmdLine& cmd_line)
 		{
 			// Get the name of this executable
-			auto exepath = win32::ExePath();
+			auto exepath = ExePath();
 			auto path = exepath.parent_path();
 			auto name = exepath.stem();
 			auto extn = exepath.extension();
@@ -115,11 +115,11 @@ namespace conx
 				// Read elements from the file
 				if (auto jprocess = root.find("process"))
 				{
-					process = Widen(jprocess->to<std::string>());
+					process = str::Widen(jprocess->to<std::string>());
 				}
 				if (auto jstartdir = root.find("startdir"))
 				{
-					startdir = Widen(jstartdir->to<std::string>());
+					startdir = str::Widen(jstartdir->to<std::string>());
 				}
 				if (auto jargs = root.find("args"))
 				{
@@ -134,7 +134,7 @@ namespace conx
 				std::wstring args;
 				for (auto& arg : cmd_line.args)
 				{
-					auto warg = str::Quotes<std::wstring>(Widen(arg.key), true);
+					auto warg = str::Quotes<std::wstring>(str::Widen(arg.key), true);
 					args.append(warg).append(L" ");
 				}
 
@@ -157,48 +157,13 @@ namespace conx
 		}
 	};
 
-	// Show the console for this process
-	void ShowConsole()
-	{
-		// Attach to the current console
-		if (AttachConsole((DWORD)-1) || AllocConsole())
-		{
-			// Redirect the CRT standard input, output, and error handles to the console
-			freopen("CONIN$", "r", stdin);
-			freopen("CONOUT$", "w", stdout);
-			freopen("CONOUT$", "w", stderr);
-
-			// Clear the error state for each of the C++ standard stream objects. We need to do this, as
-			// attempts to access the standard streams before they refer to a valid target will cause the
-			// 'iostream' objects to enter an error state. In versions of Visual Studio after 2005, this seems
-			// to always occur during startup regardless of whether anything has been read from or written to
-			// the console or not.
-			std::wcout.clear();
-			std::cout.clear();
-			std::wcerr.clear();
-			std::cerr.clear();
-			std::wcin.clear();
-			std::cin.clear();
-		}
-	}
-
-	void SetEnvVar(std::string_view env_var, std::string_view value)
-	{
-		try
-		{
-			std::ofstream file("~conx.bat");
-			file << std::format("@echo off\nset {}={}\n", env_var, value);
-		}
-		catch (std::exception const& ex)
-		{
-			std::cerr << "Failed to create '~conx.bat' file\n" << ex.what();
-		}
-	}
 }
 
-// Run as a windows program so that the console window is not shown
+// Run as a windows programso that the console window is not shown
 int __stdcall wWinMain(HINSTANCE,HINSTANCE,LPWSTR lpCmdLine,int)
 {
+	using namespace conx;
+
 	try
 	{
 		//MessageBox(0, "Paws'd", "Cex", MB_OK);
@@ -236,7 +201,7 @@ int __stdcall wWinMain(HINSTANCE,HINSTANCE,LPWSTR lpCmdLine,int)
 		std::cin.clear();
 
 		// lpCmdLine doesn't include the program name, but CmdLine expects argv[0] to be the exe path
-		auto cl = std::format("{} {}", win32::ExePath().string(), Narrow(lpCmdLine));
+		auto cl = std::format("{} {}", ExePath().string(), str::Narrow(lpCmdLine));
 		CmdLine cmd_line(cl);
 
 		conx::Main m;
@@ -250,6 +215,8 @@ int __stdcall wWinMain(HINSTANCE,HINSTANCE,LPWSTR lpCmdLine,int)
 }
 int __cdecl main(int argc, char* argv[])
 {
+	using namespace conx;
+
 	try
 	{
 		CmdLine cmd_line(argc, argv);

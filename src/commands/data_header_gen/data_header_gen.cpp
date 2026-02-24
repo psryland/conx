@@ -18,7 +18,7 @@ namespace conx
 				"  -t   : output text data in the header (instead of binary data)\n"
 				"  -v   : verbose output\n";
 		}
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -145,7 +145,7 @@ namespace conx
 		}
 	};
 
-	int HData(pr::CmdLine const& args)
+	int HData(CmdLine const& args)
 	{
 		Cmd_HData cmd;
 		return cmd.Run(args);

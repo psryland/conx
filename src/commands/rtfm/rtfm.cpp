@@ -19,7 +19,7 @@ namespace conx
 				"  Outputs markdown-formatted reference documentation to stdout.\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -437,7 +437,7 @@ conx -shdelete src,... [-flags flag,...] [-title "text"]
 		}
 	};
 
-	int Rtfm(pr::CmdLine const& args)
+	int Rtfm(CmdLine const& args)
 	{
 		Cmd_Rtfm cmd;
 		return cmd.Run(args);

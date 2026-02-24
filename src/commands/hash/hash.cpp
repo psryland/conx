@@ -21,7 +21,7 @@ namespace conx
 				" Syntax: Conx -hash data_to_hash...\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -41,7 +41,7 @@ namespace conx
 		}
 	};
 
-	int Hash(pr::CmdLine const& args)
+	int Hash(CmdLine const& args)
 	{
 		Cmd_Hash cmd;
 		return cmd.Run(args);

@@ -36,7 +36,7 @@ namespace conx
 	x("wait", "Wait for a specified length of time", Wait)
 
 	// Forward declare command functions
-	#define CONX_CMD_FUNCTION(option, description, func) int func(pr::CmdLine const& args);
+	#define CONX_CMD_FUNCTION(option, description, func) int func(CmdLine const& args);
 	CONX_CMD(CONX_CMD_FUNCTION);
 	#undef CONX_CMD_FUNCTION
 }

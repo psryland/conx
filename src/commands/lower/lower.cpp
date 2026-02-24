@@ -21,7 +21,7 @@ namespace conx
 				" Syntax: Conx -lwr \"Message to lower\"\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -38,7 +38,7 @@ namespace conx
 		}
 	};
 
-	int Lower(pr::CmdLine const& args)
+	int Lower(CmdLine const& args)
 	{
 		Cmd_Lower cmd;
 		return cmd.Run(args);

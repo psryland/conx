@@ -25,7 +25,7 @@ namespace conx
 				" Syntax: Conx -msgbox -title \"title text\" -body \"body text\" -style style_id\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -38,7 +38,7 @@ namespace conx
 		}
 	};
 
-	int MsgBox(pr::CmdLine const& args)
+	int MsgBox(CmdLine const& args)
 	{
 		Cmd_MsgBox cmd;
 		return cmd.Run(args);

@@ -53,7 +53,7 @@ namespace conx
 				"    delay ms                Pause for N milliseconds\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -503,7 +503,7 @@ namespace conx
 		}
 	};
 
-	int Automate(pr::CmdLine const& args)
+	int Automate(CmdLine const& args)
 	{
 		Cmd_Automate cmd;
 		return cmd.Run(args);

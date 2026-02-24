@@ -5,11 +5,17 @@
 // Shared utilities for process/window enumeration
 #pragma once
 #include "src/forward.h"
-#include <tlhelp32.h>
-#include <algorithm>
 
 namespace conx
 {
+	// Return the path to the current executable
+	inline std::filesystem::path ExePath()
+	{
+		wchar_t buf[MAX_PATH + 1] = {};
+		GetModuleFileNameW(nullptr, buf, MAX_PATH);
+		return std::filesystem::path(buf);
+	}
+
 	// Find all process IDs whose name contains 'name' (case-insensitive substring match)
 	inline std::vector<DWORD> FindProcesses(std::string const& name)
 	{

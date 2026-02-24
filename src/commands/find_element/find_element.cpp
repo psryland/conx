@@ -151,7 +151,7 @@ namespace conx
 				"  in both screen and client-area coordinates.\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -221,7 +221,7 @@ namespace conx
 		}
 	};
 
-	int FindElement(pr::CmdLine const& args)
+	int FindElement(CmdLine const& args)
 	{
 		Cmd_FindElement cmd;
 		return cmd.Run(args);

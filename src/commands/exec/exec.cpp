@@ -3,6 +3,8 @@
 //  Copyright (c) Rylogic Ltd 2004
 //**********************************************
 #include "src/forward.h"
+#include "src/common/string_util.h"
+#include "src/common/process.h"
 
 namespace conx
 {
@@ -23,7 +25,7 @@ namespace conx
 				"     By default this is the current directory\n"
 				;
 		}
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -33,17 +35,17 @@ namespace conx
 			if (args.count("p") != 0)
 			{
 				auto const& arg = args("p");
-				process = pr::Widen(arg.as<std::string>());
+				process = str::Widen(arg.as<std::string>());
 				for (int i = 1; i < arg.num_values(); ++i)
 				{
 					if (!params.empty()) params.push_back(' ');
-					params.append(pr::Widen(arg.as<std::string>(i)));
+					params.append(str::Widen(arg.as<std::string>(i)));
 				}
 			}
 			std::wstring working_dir;
 			if (args.count("cwd") != 0)
 			{
-				working_dir = pr::Widen(args("cwd").as<std::string>());
+				working_dir = str::Widen(args("cwd").as<std::string>());
 			}
 			bool m_async = false;
 			if (args.count("async") != 0)
@@ -55,7 +57,7 @@ namespace conx
 				return -1;
 
 			// Start the child process
-			pr::Process proc;
+			Process proc;
 			proc.Start(
 				process.c_str(),
 				!params.empty() ? params.c_str() : nullptr,
@@ -67,7 +69,7 @@ namespace conx
 		}
 	};
 
-	int Exec(pr::CmdLine const& args)
+	int Exec(CmdLine const& args)
 	{
 		Cmd_Exec cmd;
 		return cmd.Run(args);

@@ -25,7 +25,7 @@ namespace conx
 				"  and clean up. This is equivalent to clicking the window's close button.\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -127,7 +127,7 @@ namespace conx
 		}
 	};
 
-	int ShutdownProcess(pr::CmdLine const& args)
+	int ShutdownProcess(CmdLine const& args)
 	{
 		Cmd_ShutdownProcess cmd;
 		return cmd.Run(args);

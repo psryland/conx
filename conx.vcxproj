@@ -1,6 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!--
+  Globals
+  -->
+  <PropertyGroup Label="Globals">
+    <ConfigurationType>Application</ConfigurationType>
+    <TargetName>conx</TargetName>
+    <RootNamespace>conx</RootNamespace>
+    <ProjectGuid>{039B80B4-7A80-4E8D-8928-AA843B89C7EC}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <!--
   Configurations
   -->
   <ItemGroup Label="ProjectConfigurations">
@@ -14,29 +25,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <!--
-  Globals
-  -->
-  <PropertyGroup Label="Globals">
-    <ConfigurationType>Application</ConfigurationType>
-    <RootNamespace>conx</RootNamespace>
-    <ProjectGuid>{039B80B4-7A80-4E8D-8928-AA843B89C7EC}</ProjectGuid>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <PlatformToolset>v145</PlatformToolset>
-  </PropertyGroup>
-  <!--
   Build Configurations
   -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <PropertyGroup >
     <OutDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>conx</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>conx</TargetName>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <!--
@@ -46,13 +43,17 @@
     <ClCompile>
       <AdditionalIncludeDirectories>
 				;$(ProjectDir)
-				;$(ProjectDir)src
       </AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>
+        ;%(PreprocessorDefinitions)
+        ;NOMINMAX
+        ;WIN32_LEAN_AND_MEAN
+        ;_CRT_SECURE_NO_WARNINGS
+      </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
@@ -67,7 +68,10 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>
+        ;%(PreprocessorDefinitions)
+        ;_DEBUG
+      </PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -119,6 +123,11 @@
     <ClCompile Include="src\commands\wait\wait.cpp" />
     <ClInclude Include="src\commands\commands.h" />
     <ClInclude Include="src\common\process_util.h" />
+    <ClInclude Include="src\common\cmd_line.h" />
+    <ClInclude Include="src\common\string_util.h" />
+    <ClInclude Include="src\common\com_init.h" />
+    <ClInclude Include="src\common\process.h" />
+    <ClInclude Include="src\common\console_util.h" />
     <ClInclude Include="src\forward.h" />
     <ClCompile Include="src\main.cpp" />
     <ClInclude Include="src\common\json.h" />

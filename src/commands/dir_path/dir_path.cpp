@@ -15,7 +15,7 @@ namespace conx
 				"          Path name is stored into an environment variable\n"
 				" Syntax: Conx -dirpath environment_variable_name [-msg \"Message\"]\n";
 		}
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -52,7 +52,7 @@ namespace conx
 		}
 	};
 
-	int DirPath(pr::CmdLine const& args)
+	int DirPath(CmdLine const& args)
 	{
 		Cmd_DirPath cmd;
 		return cmd.Run(args);

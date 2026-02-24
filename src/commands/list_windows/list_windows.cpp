@@ -68,7 +68,7 @@ namespace conx
 			return data.windows;
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -143,7 +143,7 @@ namespace conx
 		}
 	};
 
-	int ListWindows(pr::CmdLine const& args)
+	int ListWindows(CmdLine const& args)
 	{
 		Cmd_ListWindows cmd;
 		return cmd.Run(args);

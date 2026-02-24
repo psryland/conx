@@ -41,7 +41,7 @@ namespace conx
 				"\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -78,12 +78,12 @@ namespace conx
 			}
 
 			// Perform optional conversions
-			if (m_lwr)              { pr::str::LowerCase(m_text); }
-			if (m_upr)              { pr::str::UpperCase(m_text); }
-			if (m_fwdslash)         { pr::str::Replace(m_text, "\\\\", "/");  pr::str::Replace(m_text, "\\", "/"); }
-			if (m_bkslash)          { pr::str::Replace(m_text, "\\\\", "\\"); pr::str::Replace(m_text, "/", "\\"); }
-			if (!m_newline.empty()) { pr::str::Replace(m_text, "\r\n", "\n"); pr::str::Replace(m_text, "\r", "\n"); pr::str::Replace(m_text, "\n", m_newline.c_str()); }
-			if (m_cstr)             { m_text = pr::str::StringToCString<std::string>(m_text); }
+			if (m_lwr)              { str::LowerCase(m_text); }
+			if (m_upr)              { str::UpperCase(m_text); }
+			if (m_fwdslash)         { str::Replace(m_text, "\\\\", "/");  str::Replace(m_text, "\\", "/"); }
+			if (m_bkslash)          { str::Replace(m_text, "\\\\", "\\"); str::Replace(m_text, "/", "\\"); }
+			if (!m_newline.empty()) { str::Replace(m_text, "\r\n", "\n"); str::Replace(m_text, "\r", "\n"); str::Replace(m_text, "\n", m_newline.c_str()); }
+			if (m_cstr)             { m_text = str::StringToCString<std::string>(m_text); }
 			auto SetClipBoardText = [](std::string const& text) -> bool
 			{
 				if (!OpenClipboard(nullptr)) return false;
@@ -101,7 +101,7 @@ namespace conx
 		}
 	};
 
-	int Clip(pr::CmdLine const& args)
+	int Clip(CmdLine const& args)
 	{
 		Cmd_Clip cmd;
 		return cmd.Run(args);

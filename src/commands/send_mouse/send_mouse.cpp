@@ -28,7 +28,7 @@ namespace conx
 				"  'Click' actions send a button-down followed by a button-up.\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -135,7 +135,7 @@ namespace conx
 		}
 	};
 
-	int SendMouse(pr::CmdLine const& args)
+	int SendMouse(CmdLine const& args)
 	{
 		Cmd_SendMouse cmd;
 		return cmd.Run(args);

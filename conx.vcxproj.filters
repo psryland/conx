@@ -90,6 +90,21 @@
     <ClInclude Include="src\common\json.h">
       <Filter>src\common</Filter>
     </ClInclude>
+    <ClInclude Include="src\common\cmd_line.h">
+      <Filter>src\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\string_util.h">
+      <Filter>src\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\com_init.h">
+      <Filter>src\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\process.h">
+      <Filter>src\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\console_util.h">
+      <Filter>src\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\commands\data_header_gen\data_header_gen.cpp">

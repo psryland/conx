@@ -23,7 +23,7 @@ namespace conx
 				" Syntax: Conx -wait 5 -msg \"Message to display\"\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -41,7 +41,7 @@ namespace conx
 		}
 	};
 
-	int Wait(pr::CmdLine const& args)
+	int Wait(CmdLine const& args)
 	{
 		Cmd_Wait cmd;
 		return cmd.Run(args);

@@ -22,7 +22,7 @@ namespace conx
 				"  Example output: 144 144 150\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -84,7 +84,7 @@ namespace conx
 		}
 	};
 
-	int ReadDpi(pr::CmdLine const& args)
+	int ReadDpi(CmdLine const& args)
 	{
 		Cmd_ReadDpi cmd;
 		return cmd.Run(args);

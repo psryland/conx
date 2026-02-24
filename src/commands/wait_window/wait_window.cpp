@@ -23,7 +23,7 @@ namespace conx
 				"  or 1 on timeout. Useful for waiting for app startup or dialogs.\n";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -76,7 +76,7 @@ namespace conx
 		}
 	};
 
-	int WaitWindow(pr::CmdLine const& args)
+	int WaitWindow(CmdLine const& args)
 	{
 		Cmd_WaitWindow cmd;
 		return cmd.Run(args);

@@ -12,7 +12,7 @@ namespace conx
 		static char const* BuildPathList(std::string const& arg, std::string& buf)
 		{
 			buf.clear();
-			pr::str::Split(arg, ",", [&](auto sub, int)
+			str::Split(arg, ",", [&](auto sub, int)
 			{
 				buf.append(std::filesystem::absolute(std::string(sub)).string());
 				buf.push_back('\0');
@@ -25,23 +25,23 @@ namespace conx
 		static FILEOP_FLAGS ParseFlags(std::string const& arg)
 		{
 			FILEOP_FLAGS flags = 0;
-			pr::str::Split(arg, ",", [&](auto sub, int)
+			str::Split(arg, ",", [&](auto sub, int)
 			{
 				auto s = std::string(sub);
-				if (pr::str::EqualI(s, "AllowUndo"))             flags |= FOF_ALLOWUNDO;
-				else if (pr::str::EqualI(s, "FilesOnly"))        flags |= FOF_FILESONLY;
-				else if (pr::str::EqualI(s, "MultiDestFiles"))   flags |= FOF_MULTIDESTFILES;
-				else if (pr::str::EqualI(s, "NoConfirmation"))   flags |= FOF_NOCONFIRMATION;
-				else if (pr::str::EqualI(s, "NoConfirmMkDir"))   flags |= FOF_NOCONFIRMMKDIR;
-				else if (pr::str::EqualI(s, "NoConnectedElements")) flags |= FOF_NO_CONNECTED_ELEMENTS;
-				else if (pr::str::EqualI(s, "NoCopySecurityAttribs")) flags |= FOF_NOCOPYSECURITYATTRIBS;
-				else if (pr::str::EqualI(s, "NoErrorUI"))        flags |= FOF_NOERRORUI;
-				else if (pr::str::EqualI(s, "NoRecursion"))      flags |= FOF_NORECURSION;
-				else if (pr::str::EqualI(s, "NoUI"))             flags |= FOF_NO_UI;
-				else if (pr::str::EqualI(s, "RenameOnCollision")) flags |= FOF_RENAMEONCOLLISION;
-				else if (pr::str::EqualI(s, "Silent"))           flags |= FOF_SILENT;
-				else if (pr::str::EqualI(s, "SimpleProgress"))   flags |= FOF_SIMPLEPROGRESS;
-				else if (pr::str::EqualI(s, "WantNukeWarning"))  flags |= FOF_WANTNUKEWARNING;
+				if (str::EqualI(s, "AllowUndo"))             flags |= FOF_ALLOWUNDO;
+				else if (str::EqualI(s, "FilesOnly"))        flags |= FOF_FILESONLY;
+				else if (str::EqualI(s, "MultiDestFiles"))   flags |= FOF_MULTIDESTFILES;
+				else if (str::EqualI(s, "NoConfirmation"))   flags |= FOF_NOCONFIRMATION;
+				else if (str::EqualI(s, "NoConfirmMkDir"))   flags |= FOF_NOCONFIRMMKDIR;
+				else if (str::EqualI(s, "NoConnectedElements")) flags |= FOF_NO_CONNECTED_ELEMENTS;
+				else if (str::EqualI(s, "NoCopySecurityAttribs")) flags |= FOF_NOCOPYSECURITYATTRIBS;
+				else if (str::EqualI(s, "NoErrorUI"))        flags |= FOF_NOERRORUI;
+				else if (str::EqualI(s, "NoRecursion"))      flags |= FOF_NORECURSION;
+				else if (str::EqualI(s, "NoUI"))             flags |= FOF_NO_UI;
+				else if (str::EqualI(s, "RenameOnCollision")) flags |= FOF_RENAMEONCOLLISION;
+				else if (str::EqualI(s, "Silent"))           flags |= FOF_SILENT;
+				else if (str::EqualI(s, "SimpleProgress"))   flags |= FOF_SIMPLEPROGRESS;
+				else if (str::EqualI(s, "WantNukeWarning"))  flags |= FOF_WANTNUKEWARNING;
 				else std::cerr << std::format("Unknown flag: '{}'\n", s);
 			});
 			return flags;
@@ -67,7 +67,7 @@ R"(Shell File Operation: Perform a file operation using the Windows Explorer she
 )";
 		}
 
-		int Run(pr::CmdLine const& args)
+		int Run(CmdLine const& args)
 		{
 			if (args.count("help") != 0)
 				return ShowHelp(), 0;
@@ -134,7 +134,7 @@ R"(Shell File Operation: Perform a file operation using the Windows Explorer she
 		}
 	};
 
-	int ShFileOp(pr::CmdLine const& args)
+	int ShFileOp(CmdLine const& args)
 	{
 		Cmd_ShFileOp cmd;
 		return cmd.Run(args);
