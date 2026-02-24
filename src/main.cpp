@@ -9,7 +9,7 @@ using namespace pr;
 
 namespace conx
 {
-	static std::string_view Version = "1.4.0";
+	static std::string_view Version = "1.0.0";
 
 	struct Main
 	{
@@ -53,6 +53,13 @@ namespace conx
 				}
 				return false;
 			};
+
+			// Handle -version before command dispatch
+			if (cmd_line.count("version") != 0)
+			{
+				std::cout << Version << "\n";
+				return 0;
+			}
 
 			// Forward to the appropriate command
 			{
