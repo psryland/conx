@@ -31,7 +31,7 @@
 #include <io.h>
 #include <shellapi.h>
 
-#include "json.h"
+#include "common/json.h"
 
 // ── CmdLine ─────────────────────────────────────────────────────────
 // Standalone command-line parser, replaces pr/common/command_line.h

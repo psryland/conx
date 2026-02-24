@@ -4,7 +4,7 @@
 //**********************************************
 // ShutdownProcess: Gracefully close a process by sending WM_CLOSE to its windows.
 #include "src/forward.h"
-#include "src/commands/process_util.h"
+#include "src/common/process_util.h"
 
 namespace conx
 {

@@ -4,7 +4,7 @@
 //**********************************************
 // ReadText: Read text content from a window using UI Automation.
 #include "src/forward.h"
-#include "src/commands/process_util.h"
+#include "src/common/process_util.h"
 
 #include <UIAutomation.h>
 

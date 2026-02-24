@@ -4,7 +4,7 @@
 //**********************************************
 // WaitWindow: Wait for a window matching a title to appear.
 #include "src/forward.h"
-#include "src/commands/process_util.h"
+#include "src/common/process_util.h"
 
 namespace conx
 {

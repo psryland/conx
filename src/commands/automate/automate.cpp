@@ -5,7 +5,7 @@
 // Automate: a scripting command for batched mouse/keyboard input.
 // Reads a line-based script from stdin and executes each command sequentially.
 #include "src/forward.h"
-#include "src/commands/process_util.h"
+#include "src/common/process_util.h"
 
 #include <charconv>
 #include <cmath>

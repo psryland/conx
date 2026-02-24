@@ -4,7 +4,7 @@
 //**********************************************
 // FindElement: Find a UI element by name and return its bounding rectangle.
 #include "src/forward.h"
-#include "src/commands/process_util.h"
+#include "src/common/process_util.h"
 
 #include <UIAutomation.h>
 

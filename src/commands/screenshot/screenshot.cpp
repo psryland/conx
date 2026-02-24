@@ -3,7 +3,7 @@
 //  Copyright (c) Rylogic Ltd 2004
 //**********************************************
 #include "src/forward.h"
-#include "src/commands/process_util.h"
+#include "src/common/process_util.h"
 
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")

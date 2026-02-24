@@ -70,6 +70,9 @@
     <Filter Include="src\commands\rtfm">
       <UniqueIdentifier>{84874e9c-4997-435c-95d4-4e90e38a6a8a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\common">
+      <UniqueIdentifier>{a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\forward.h">
@@ -81,11 +84,11 @@
     <ClInclude Include="src\commands\commands.h">
       <Filter>src\commands</Filter>
     </ClInclude>
-    <ClInclude Include="src\commands\process_util.h">
-      <Filter>src\commands</Filter>
+    <ClInclude Include="src\common\process_util.h">
+      <Filter>src\common</Filter>
     </ClInclude>
-    <ClInclude Include="src\json.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\common\json.h">
+      <Filter>src\common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
