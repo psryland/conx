@@ -11,11 +11,14 @@ description: >
 # conx — Console Extensions
 
 conx is a single-binary Windows CLI tool for GUI automation, window management, and shell utilities.
-The executable is built from this repository at `obj/x64/Debug/conx.exe` (Debug) or `obj/x64/Release/conx.exe` (Release).
+The `conx.exe` executable is located in the same directory as this skill file (`.github/skills/conx-automation/conx.exe`).
+A Release build of the project automatically copies the binary here.
 
-> **Important:** conx is a Windows subsystem application. To capture its stdout, run it via `cmd /c`:
+> **Important:** conx is a Windows subsystem application. To capture its stdout, run it via `cmd /c`.
+> The skill directory can be resolved relative to the repository root:
 > ```powershell
-> $output = & cmd /c "`"path\to\conx.exe`" -guid" 2>&1
+> $conx = Join-Path $PWD ".github\skills\conx-automation\conx.exe"
+> $output = & cmd /c "`"$conx`" -guid" 2>&1
 > ```
 
 ## Command Reference
@@ -80,9 +83,9 @@ conx -send_mouse x,y -b <button-action> -p <process-name> [-w <window-name>]
 
 **Drag sequence example** (button down → move → button up):
 ```powershell
-& cmd /c "conx.exe -send_mouse 100,100 -b LeftDown -p MyApp"
-& cmd /c "conx.exe -send_mouse 200,200 -b Move     -p MyApp"
-& cmd /c "conx.exe -send_mouse 200,200 -b LeftUp   -p MyApp"
+& cmd /c "`"$conx`" -send_mouse 100,100 -b LeftDown -p MyApp"
+& cmd /c "`"$conx`" -send_mouse 200,200 -b Move     -p MyApp"
+& cmd /c "`"$conx`" -send_mouse 200,200 -b LeftUp   -p MyApp"
 ```
 
 #### automate — Execute a script of mouse/keyboard commands
@@ -237,7 +240,7 @@ conx -rtfm
 ```
 To discover all commands and their full options, dump the built-in manual:
 ```powershell
-& cmd /c "conx.exe -rtfm" > conx-manual.md
+& cmd /c "`"$conx`" -rtfm" > conx-manual.md
 ```
 Then read `conx-manual.md` for complete markdown documentation of every command.
 
@@ -256,29 +259,31 @@ This is useful for debugging GUI interactions without requiring the user to manu
 
 ```powershell
 # 1. Type into the app
-& cmd /c "conx.exe -send_keys `"Hello World`" -p notepad"
+& cmd /c "`"$conx`" -send_keys `"Hello World`" -p notepad"
 # 2. Capture
-& cmd /c "conx.exe -screenshot -p notepad -o C:\tmp\verify"
+& cmd /c "`"$conx`" -screenshot -p notepad -o C:\tmp\verify"
 # 3. View the image (use Copilot's view tool on the PNG)
 ```
 
 ### Wait for an app to start, then interact with it
 
 ```powershell
+$conx = Join-Path $PWD ".github\skills\conx-automation\conx.exe"
+
 # Launch the app
 Start-Process "MyApp.exe"
 
 # Wait for its main window
-& cmd /c "conx.exe -wait_window -p MyApp -timeout 10000"
+& cmd /c "`"$conx`" -wait_window -p MyApp -timeout 10000"
 
 # Send keyboard input
-& cmd /c "conx.exe -send_keys `"Hello World`" -p MyApp"
+& cmd /c "`"$conx`" -send_keys `"Hello World`" -p MyApp"
 ```
 
 ### Take a screenshot of a running application
 
 ```powershell
-& cmd /c "conx.exe -screenshot -p notepad -o C:\screenshots"
+& cmd /c "`"$conx`" -screenshot -p notepad -o C:\screenshots"
 ```
 
 ### Automate a sequence of GUI actions
@@ -292,28 +297,28 @@ delay 500
 type test_document.txt
 delay 200
 key enter
-"@ | & cmd /c "conx.exe -automate -p notepad"
+"@ | & cmd /c "`"$conx`" -automate -p notepad"
 ```
 
 ### Copy files with Explorer shell (supports undo)
 
 ```powershell
-& cmd /c "conx.exe -shcopy `"C:\src\file.txt`" `"C:\dst`" -flags AllowUndo,NoConfirmMkDir"
+& cmd /c "`"$conx`" -shcopy `"C:\src\file.txt`" `"C:\dst`" -flags AllowUndo,NoConfirmMkDir"
 ```
 
 ### Read text from a window for verification
 
 ```powershell
-$text = & cmd /c "conx.exe -read_text -p notepad" 2>&1
+$text = & cmd /c "`"$conx`" -read_text -p notepad" 2>&1
 if ($text -match "Expected Content") { Write-Host "Found it" }
 ```
 
 ### Find a UI element and click it
 
 ```powershell
-$elem = & cmd /c "conx.exe -find_element -name `"Save`" -p MyApp" 2>&1
+$elem = & cmd /c "`"$conx`" -find_element -name `"Save`" -p MyApp" 2>&1
 # Parse the client coordinates from the output, then click
-& cmd /c "conx.exe -send_mouse 150,300 -b LeftClick -p MyApp"
+& cmd /c "`"$conx`" -send_mouse 150,300 -b LeftClick -p MyApp"
 ```
 
 ## Building conx
@@ -322,7 +327,7 @@ $elem = & cmd /c "conx.exe -find_element -name `"Save`" -p MyApp" 2>&1
 msbuild conx.vcxproj /p:Configuration=Release /p:Platform=x64
 ```
 
-Output: `obj/x64/Release/conx.exe`
+A Release build automatically copies `conx.exe` into `.github/skills/conx-automation/`.
 
 ## Testing
 
