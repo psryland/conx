@@ -9,6 +9,7 @@ A single-binary Windows CLI tool for GUI automation, window management, screen c
 - **GUI Automation** — Send keyboard/mouse input, run scripted action sequences
 - **UI Inspection** — Find elements by name, read text from windows, list windows
 - **Screen Capture** — Capture windows to PNG with scaling and GPU-app support
+- **Video Recording** — Record frame sequences as PNGs or H.265 MP4 video
 - **Shell File Operations** — Copy/move/rename/delete via Windows Explorer shell
 - **Utilities** — GUID generation, hashing, clipboard, process launching, and more
 - **Self-documenting** — Built-in markdown reference via `conx -rtfm`
@@ -26,6 +27,9 @@ conx -guid
 
 # Take a screenshot of Notepad
 conx -screenshot -p notepad -o C:\screenshots
+
+# Record a 5-second MP4 video of an app
+conx -record -p myapp -o C:\tmp\clip.mp4 -fps 10 -duration 5 -bitblt
 
 # Send keyboard input to an app
 conx -send_keys "Hello World" -p notepad
@@ -62,6 +66,7 @@ conx -rtfm
 | `msgbox` | Display a message box |
 | `read_dpi` | Report DPI scaling for a monitor |
 | `read_text` | Read text from a window using UI Automation |
+| `record` | Record frame sequences as numbered PNGs or H.265/H.264 MP4 video |
 | `rtfm` | Output complete command reference in markdown |
 | `screenshot` | Capture windows to PNG |
 | `send_keys` | Send key presses to a window |
