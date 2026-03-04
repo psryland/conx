@@ -26,6 +26,7 @@ namespace conx
 	x("msgbox", "Display a message box", MsgBox)\
 	x("read_dpi", "Report the DPI scaling for a monitor", ReadDpi)\
 	x("read_text", "Read text from a window using UI Automation", ReadText)\
+	x("record", "Record a sequence of frames from a window or screen region", Record)\
 	x("rtfm", "Output complete command reference in markdown", Rtfm)\
 	x("screenshot", "Capture visible windows of a process to PNG", Screenshot)\
 	x("send_keys", "Send key presses to a window", SendKeys)\

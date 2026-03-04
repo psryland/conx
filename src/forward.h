@@ -32,6 +32,7 @@
 #include <objbase.h>
 #include <shellapi.h>
 #include <tlhelp32.h>
+#include <gdiplus.h>
 
 #include "common/json.h"
 #include "common/cmd_line.h"

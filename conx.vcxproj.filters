@@ -61,6 +61,9 @@
     <Filter Include="src\commands\read_text">
       <UniqueIdentifier>{aedfa139-4328-4504-bce4-628600c56a95}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\commands\record">
+      <UniqueIdentifier>{b3f7a1c2-9d84-4e5f-a0b6-8c1d2e3f4a5b}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\commands\shutdown_process">
       <UniqueIdentifier>{1145994b-4a21-404d-b19a-0aebde79353f}</UniqueIdentifier>
     </Filter>
@@ -160,6 +163,9 @@
     </ClCompile>
     <ClCompile Include="src\commands\read_text\read_text.cpp">
       <Filter>src\commands\read_text</Filter>
+    </ClCompile>
+    <ClCompile Include="src\commands\record\record.cpp">
+      <Filter>src\commands\record</Filter>
     </ClCompile>
     <ClCompile Include="src\commands\shutdown_process\shutdown_process.cpp">
       <Filter>src\commands\shutdown_process</Filter>
