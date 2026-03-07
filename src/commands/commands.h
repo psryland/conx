@@ -24,6 +24,7 @@ namespace conx
 	x("list_windows", "List all windows of a process", ListWindows)\
 	x("lwr", "Convert a string to lower case", Lower)\
 	x("msgbox", "Display a message box", MsgBox)\
+	x("newlines", "Add or remove new lines from a text file", NewLines)\
 	x("read_dpi", "Report the DPI scaling for a monitor", ReadDpi)\
 	x("read_text", "Read text from a window using UI Automation", ReadText)\
 	x("record", "Record a sequence of frames from a window or screen region", Record)\
