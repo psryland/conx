@@ -17,6 +17,7 @@ namespace conx
 	x("clip", "Add text to the windows clipboard", Clip)\
 	x("dirpath", "Open a dialog window for finding a path", DirPath)\
 	x("exec", "Exec: execute another process", Exec)\
+	x("extract_frames", "Extract PNG frames from a video file", ExtractFrames)\
 	x("find_element", "Find a UI element by name", FindElement)\
 	x("guid", "Generate a new GUID", Guid)\
 	x("hash", "Hash the given stdin data", Hash)\

@@ -105,6 +105,7 @@
     <ClCompile Include="src\commands\data_header_gen\data_header_gen.cpp" />
     <ClCompile Include="src\commands\dir_path\dir_path.cpp" />
     <ClCompile Include="src\commands\exec\exec.cpp" />
+    <ClCompile Include="src\commands\extract_frames\extract_frames.cpp" />
     <ClCompile Include="src\commands\find_element\find_element.cpp" />
     <ClCompile Include="src\commands\guid\guid.cpp" />
     <ClCompile Include="src\commands\hash\hash.cpp" />
