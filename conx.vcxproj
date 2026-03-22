@@ -111,6 +111,7 @@
     <ClCompile Include="src\commands\hash\hash.cpp" />
     <ClCompile Include="src\commands\lower\lower.cpp" />
     <ClCompile Include="src\commands\list_windows\list_windows.cpp" />
+    <ClCompile Include="src\commands\move_window\move_window.cpp" />
     <ClCompile Include="src\commands\msg_box\msg_box.cpp" />
     <ClCompile Include="src\commands\new_lines\new_lines.cpp" />
     <ClCompile Include="src\commands\read_dpi\read_dpi.cpp" />

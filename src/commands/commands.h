@@ -24,6 +24,7 @@ namespace conx
 	x("hdata", "Convert a source file into a C/C++ compatible header file", HData)\
 	x("list_windows", "List all windows of a process", ListWindows)\
 	x("lwr", "Convert a string to lower case", Lower)\
+	x("move_window", "Move a window to a new screen location", MoveWindow)\
 	x("msgbox", "Display a message box", MsgBox)\
 	x("newlines", "Add or remove new lines from a text file", NewLines)\
 	x("read_dpi", "Report the DPI scaling for a monitor", ReadDpi)\

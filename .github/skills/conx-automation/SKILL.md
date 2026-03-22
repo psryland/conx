@@ -50,6 +50,14 @@ conx -wait_window -p <process-name> [-w <window-name>] [-timeout <ms>]
 - Returns 0 when found, 1 on timeout (default: 30000ms)
 - Useful for waiting for application startup or dialogs
 
+#### move_window — Move a window to a new position
+
+```
+conx -move_window -p <process-name> [-w <window-name>] -x <X> -y <Y> [-width <W>] [-height <H>]
+```
+- Moves (and optionally resizes) a window to the specified screen position
+- `-width` / `-height` override the current size; omit to keep current dimensions
+
 #### shutdown_process — Gracefully close a process
 
 ```

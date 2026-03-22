@@ -55,6 +55,9 @@
     <Filter Include="src\commands\list_windows">
       <UniqueIdentifier>{1b1084d5-c185-4298-b608-284ed383e82e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\commands\move_window">
+      <UniqueIdentifier>{7c3a9f12-e4b5-4d8a-a1c6-5f2e8d7b3a90}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\commands\read_dpi">
       <UniqueIdentifier>{e1ac546d-34af-4fc2-967b-03284497c0ee}</UniqueIdentifier>
     </Filter>
@@ -157,6 +160,9 @@
     </ClCompile>
     <ClCompile Include="src\commands\list_windows\list_windows.cpp">
       <Filter>src\commands\list_windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\commands\move_window\move_window.cpp">
+      <Filter>src\commands\move_window</Filter>
     </ClCompile>
     <ClCompile Include="src\commands\read_dpi\read_dpi.cpp">
       <Filter>src\commands\read_dpi</Filter>
