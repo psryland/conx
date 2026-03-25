@@ -73,9 +73,11 @@ conx -shutdown_process -p <process-name> [-w <window-name>] [-timeout <ms>]
 #### send_keys — Send keyboard input to a window
 
 ```
-conx -send_keys "text" -p <process-name> [-w <window-name>] [-rate <keys-per-second>]
+conx -send_keys "text" -p <process-name> [-w <window-name>] [-rate <keys-per-second>] [-bg] [-c <class>]
 ```
-- Brings window to foreground, uses SendInput for hardware-level key simulation
+- Without `-bg`: brings window to foreground, uses SendInput for hardware-level key simulation
+- With `-bg`: posts WM_CHAR messages directly — **does not steal focus**. Works for native Win32 apps.
+- `-c <class>`: (with `-bg`) target a child control by class name substring (e.g., `Edit`, `RichEdit`)
 - Characters are sent as raw unicode — this does **not** parse key-combo escape sequences like `{CTRL+A}`
 - For key combos (ctrl+a, shift+delete, etc.), use the `automate` command with `key combo` instead
 - Default rate: 10 keys/second
@@ -83,11 +85,13 @@ conx -send_keys "text" -p <process-name> [-w <window-name>] [-rate <keys-per-sec
 #### send_mouse — Send mouse events to a window
 
 ```
-conx -send_mouse x,y -b <button-action> -p <process-name> [-w <window-name>]
+conx -send_mouse x,y -b <button-action> -p <process-name> [-w <window-name>] [-bg]
 ```
 - Button actions: `LeftDown`, `LeftUp`, `LeftClick`, `RightDown`, `RightUp`, `RightClick`,
   `MiddleDown`, `MiddleUp`, `MiddleClick`, `Move`
 - Coordinates are relative to the window's client area
+- With `-bg`: posts WM_ messages directly — **does not steal focus**. Automatically resolves the
+  deepest child window at the click point. Works for native Win32 apps.
 
 **Drag sequence example** (button down → move → button up):
 ```powershell
@@ -99,8 +103,11 @@ conx -send_mouse x,y -b <button-action> -p <process-name> [-w <window-name>]
 #### automate — Execute a script of mouse/keyboard commands
 
 ```
-conx -automate -p <process-name> [-w <window-name>] [-f <script-file>]
+conx -automate -p <process-name> [-w <window-name>] [-f <script-file>] [-bg] [-c <class>]
 ```
+- With `-bg`: posts WM_ messages directly — **does not steal focus**. All mouse and keyboard
+  commands use background message posting instead of SendInput.
+- `-c <class>`: (with `-bg`) target a child control by class name for keyboard commands
 Script commands (one per line, `#` for comments):
 - **Mouse:** `move x,y`, `click x,y [button]`, `down x,y [button]`, `up [button]`, `drag x1,y1 x2,y2 [N]`
 - **Drawing:** `line x1,y1 x2,y2`, `circle cx,cy r [N]`, `arc cx,cy r a0 a1 [N]`, `fill_circle cx,cy r [N]`
@@ -255,6 +262,39 @@ Then read `conx-manual.md` for complete markdown documentation of every command.
 ---
 
 ## Common Patterns
+
+### Background Mode (`-bg`) — Automation Without Stealing Focus
+
+Add `-bg` to `send_keys`, `send_mouse`, or `automate` to post WM_ messages directly to
+window handles instead of using SendInput. This **does not steal keyboard/mouse focus**
+from the user.
+
+**When to use `-bg`:**
+- Native Win32 applications (Notepad, Explorer, MFC, WinForms, WPF)
+- Any time the user is working and you don't want to interrupt them
+
+**When to use foreground mode (no `-bg`):**
+- Electron/Chromium apps (VS Code, Discord, Slack, Chrome) — they don't use standard Win32 controls
+- UWP/WinUI apps that don't process posted WM_ messages
+- Key combos with modifiers (ctrl+a, shift+delete, etc.) — modifier key state isn't
+  propagated by PostMessage, so most controls won't recognise the modifier
+- When `-bg` mode doesn't produce the expected result
+
+```powershell
+# Background: type into Notepad without stealing focus
+& cmd /c "`"$conx`" -send_keys `"Hello World`" -p notepad -bg -c Edit"
+
+# Background: click a button in a Win32 app
+& cmd /c "`"$conx`" -send_mouse 150,300 -b LeftClick -p MyApp -bg"
+
+# Background: run an automation script
+@"
+click 30,10
+delay 500
+type test_document.txt
+key enter
+"@ | & cmd /c "`"$conx`" -automate -p notepad -bg -c Edit"
+```
 
 ### Visual Verification Workflow
 

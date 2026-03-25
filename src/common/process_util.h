@@ -152,6 +152,132 @@ namespace conx
 		return pt;
 	}
 
+	// ── Background (WM_ message) helpers ──────────────────────────────────────────
+	// These post WM_ messages directly to window handles, avoiding SendInput and
+	// the need to bring the target to the foreground. Works for native Win32 apps;
+	// Electron/Chromium apps should fall back to SendInput.
+
+	// Walk ChildWindowFromPointEx recursively to find the deepest child at a point.
+	// Coordinates are relative to 'parent's client area.
+	inline HWND FindChildAtPoint(HWND parent, int client_x, int client_y)
+	{
+		POINT pt = { client_x, client_y };
+		auto current = parent;
+		for (;;)
+		{
+			auto child = ChildWindowFromPointEx(current, pt, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED | CWP_SKIPTRANSPARENT);
+			if (!child || child == current)
+				break;
+
+			// Convert the point from current's client space into child's client space
+			MapWindowPoints(current, child, &pt, 1);
+			current = child;
+		}
+		return current;
+	}
+
+	// Find the first visible child window whose class name contains 'class_name' (case-insensitive).
+	inline HWND FindChildByClass(HWND parent, std::string const& class_name)
+	{
+		struct EnumData
+		{
+			std::string target;
+			HWND result;
+		};
+
+		auto lower = class_name;
+		std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return static_cast<char>(tolower(c)); });
+
+		EnumData data = { lower, nullptr };
+		EnumChildWindows(parent, [](HWND hwnd, LPARAM lparam) -> BOOL
+		{
+			auto& d = *reinterpret_cast<EnumData*>(lparam);
+			if (!IsWindowVisible(hwnd))
+				return TRUE;
+
+			char buf[256] = {};
+			GetClassNameA(hwnd, buf, sizeof(buf));
+			std::string cls = buf;
+			std::transform(cls.begin(), cls.end(), cls.begin(), [](char c) { return static_cast<char>(tolower(c)); });
+
+			if (cls.find(d.target) != std::string::npos)
+			{
+				d.result = hwnd;
+				return FALSE; // stop enumeration
+			}
+			return TRUE;
+		}, reinterpret_cast<LPARAM>(&data));
+		return data.result;
+	}
+
+	// Post a mouse event via WM_ messages. Coordinates are relative to 'parent's client area.
+	// Automatically resolves the deepest child at the point and converts coords.
+	inline void PostMouseMsg(HWND parent, int client_x, int client_y, DWORD action)
+	{
+		POINT pt = { client_x, client_y };
+		auto target = FindChildAtPoint(parent, client_x, client_y);
+
+		// Convert from parent's client space to target's client space
+		if (target != parent)
+			MapWindowPoints(parent, target, &pt, 1);
+
+		auto lparam = MAKELPARAM(static_cast<short>(pt.x), static_cast<short>(pt.y));
+
+		// Map MOUSEEVENTF_* flags to WM_ messages
+		if (action & MOUSEEVENTF_LEFTDOWN)   PostMessage(target, WM_LBUTTONDOWN, MK_LBUTTON, lparam);
+		if (action & MOUSEEVENTF_LEFTUP)     PostMessage(target, WM_LBUTTONUP,   0,          lparam);
+		if (action & MOUSEEVENTF_RIGHTDOWN)  PostMessage(target, WM_RBUTTONDOWN, MK_RBUTTON, lparam);
+		if (action & MOUSEEVENTF_RIGHTUP)    PostMessage(target, WM_RBUTTONUP,   0,          lparam);
+		if (action & MOUSEEVENTF_MIDDLEDOWN) PostMessage(target, WM_MBUTTONDOWN, MK_MBUTTON, lparam);
+		if (action & MOUSEEVENTF_MIDDLEUP)   PostMessage(target, WM_MBUTTONUP,   0,          lparam);
+
+		// If no button flags at all, treat as a move
+		auto const button_mask = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP
+			| MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP
+			| MOUSEEVENTF_MIDDLEDOWN | MOUSEEVENTF_MIDDLEUP;
+		if ((action & button_mask) == 0)
+			PostMessage(target, WM_MOUSEMOVE, 0, lparam);
+	}
+
+	// Post a WM_CHAR message for a single character.
+	inline void PostCharMsg(HWND hwnd, char ch)
+	{
+		PostMessage(hwnd, WM_CHAR, static_cast<WPARAM>(ch), 1);
+	}
+
+	// Build the lParam for WM_KEYDOWN / WM_KEYUP from a virtual key code.
+	inline LPARAM MakeKeyLParam(WORD vk, bool key_up)
+	{
+		auto scan = MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+		LPARAM lp = 1; // repeat count = 1
+		lp |= (static_cast<LPARAM>(scan) & 0xFF) << 16;
+
+		// Extended key flag for navigation/numpad keys
+		bool extended = (vk >= VK_PRIOR && vk <= VK_DELETE) || vk == VK_DIVIDE || vk == VK_NUMLOCK
+			|| vk == VK_RCONTROL || vk == VK_RMENU;
+		if (extended)
+			lp |= (1LL << 24);
+
+		if (key_up)
+		{
+			lp |= (1LL << 30); // previous key state
+			lp |= (1LL << 31); // transition state
+		}
+		return lp;
+	}
+
+	// Post WM_KEYDOWN for a virtual key.
+	inline void PostVKeyDown(HWND hwnd, WORD vk)
+	{
+		PostMessage(hwnd, WM_KEYDOWN, vk, MakeKeyLParam(vk, false));
+	}
+
+	// Post WM_KEYUP for a virtual key.
+	inline void PostVKeyUp(HWND hwnd, WORD vk)
+	{
+		PostMessage(hwnd, WM_KEYUP, vk, MakeKeyLParam(vk, true));
+	}
+
 	// Bring a window to the foreground, working around SetForegroundWindow restrictions.
 	// If 'click' is true, a mouse click is sent to the centre of the client area to
 	// ensure keyboard focus lands inside the window's content control.

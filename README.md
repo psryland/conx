@@ -6,7 +6,7 @@ A single-binary Windows CLI tool for GUI automation, window management, screen c
 
 ## Features
 
-- **GUI Automation** — Send keyboard/mouse input, run scripted action sequences
+- **GUI Automation** — Send keyboard/mouse input, run scripted action sequences, with background mode (`-bg`) for focus-free automation via WM_ messages
 - **UI Inspection** — Find elements by name, read text from windows, list windows
 - **Screen Capture** — Capture windows to PNG with scaling and GPU-app support
 - **Video Recording** — Record frame sequences as PNGs or H.265 MP4 video
@@ -33,6 +33,9 @@ conx -record -p myapp -o C:\tmp\clip.mp4 -fps 10 -duration 5 -bitblt
 
 # Send keyboard input to an app
 conx -send_keys "Hello World" -p notepad
+
+# Send keyboard input without stealing focus (background mode)
+conx -send_keys "Hello World" -p notepad -bg -c Edit
 
 # Copy files using Windows Explorer shell (supports undo)
 conx -shcopy "C:\src\file.txt" "C:\dst" -flags AllowUndo,NoConfirmMkDir

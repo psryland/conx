@@ -24,10 +24,15 @@ namespace conx
 		{
 			std::cout <<
 				"Automate: Execute a script of mouse/keyboard commands\n"
-				" Syntax: Conx -automate -p <process-name> [-w <window-name>] [-f <script-file>]\n"
-				"  -p : Name (or partial name) of the target process\n"
-				"  -w : Title (or partial title) of the target window (default: largest)\n"
-				"  -f : Script file to read (default: stdin)\n"
+				" Syntax: Conx -automate -p <process-name> [-w <window-name>] [-f <script-file>] [-bg] [-c <class>]\n"
+				"  -p  : Name (or partial name) of the target process\n"
+				"  -w  : Title (or partial title) of the target window (default: largest)\n"
+				"  -f  : Script file to read (default: stdin)\n"
+				"  -bg : Background mode — post WM_ messages directly to the window\n"
+				"         instead of using SendInput. Does not steal focus. Works for\n"
+				"         native Win32 apps; use foreground mode for Electron/Chromium.\n"
+				"  -c  : (With -bg) Target a child control by class name substring\n"
+				"         for keyboard commands (e.g., 'Edit', 'RichEdit').\n"
 				"\n"
 				"  Reads commands from stdin, one per line. Lines starting with '#' are comments.\n"
 				"  All coordinates are relative to the window's client area.\n"
@@ -64,6 +69,11 @@ namespace conx
 			std::string window_name;
 			if (args.count("w") != 0) { window_name = args("w").as<std::string>(); }
 
+			m_background = args.count("bg") != 0;
+
+			std::string child_class;
+			if (args.count("c") != 0) { child_class = args("c").as<std::string>(); }
+
 			if (process_name.empty()) { std::cerr << "No process name provided (-p)\n"; return ShowHelp(), -1; }
 
 			auto hwnd = FindWindow(process_name, window_name);
@@ -72,6 +82,18 @@ namespace conx
 				auto target = window_name.empty() ? process_name : std::format("{}:{}", process_name, window_name);
 				std::cerr << std::format("No window found for '{}'\n", target);
 				return -1;
+			}
+
+			// Resolve keyboard target for background mode
+			m_key_target = hwnd;
+			if (m_background && !child_class.empty())
+			{
+				m_key_target = FindChildByClass(hwnd, child_class);
+				if (!m_key_target)
+				{
+					std::cerr << std::format("No child control matching class '{}' found\n", child_class);
+					return -1;
+				}
 			}
 
 			// Open the script source (file or stdin)
@@ -84,11 +106,13 @@ namespace conx
 			}
 			auto& input = file_stream.is_open() ? static_cast<std::istream&>(file_stream) : std::cin;
 
-			std::cout << std::format("Automating '{}'\n", GetWindowTitle(hwnd));
+			auto mode = m_background ? "bg" : "fg";
+			std::cout << std::format("Automating '{}' [{}]\n", GetWindowTitle(hwnd), mode);
 			std::cout.flush();
 
-			// Bring the target window to the foreground once
-			BringToForeground(hwnd);
+			// Only bring to foreground in foreground mode
+			if (!m_background)
+				BringToForeground(hwnd);
 
 			// Read and execute script lines
 			std::string line;
@@ -121,6 +145,15 @@ namespace conx
 
 		// The last known cursor position (for 'up' without coordinates)
 		POINT m_last_abs = {};
+
+		// The last known client position (for 'up' in background mode)
+		POINT m_last_client = {};
+
+		// Background mode flag
+		bool m_background = false;
+
+		// Target HWND for keyboard messages in background mode
+		HWND m_key_target = nullptr;
 
 		// Parse a comma-separated coordinate pair "x,y"
 		static bool ParseXY(std::string const& s, int& x, int& y)
@@ -168,16 +201,44 @@ namespace conx
 			return true;
 		}
 
-		// Send a mouse input event at absolute screen coordinates
-		void SendMouse(POINT abs, DWORD flags)
+		// Send a mouse input event. In foreground mode, uses SendInput with absolute
+		// screen coordinates. In background mode, posts WM_ messages.
+		void SendMouse(HWND hwnd, int client_x, int client_y, DWORD flags)
 		{
-			INPUT input = {};
-			input.type = INPUT_MOUSE;
-			input.mi.dx = abs.x;
-			input.mi.dy = abs.y;
-			input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK | flags;
-			::SendInput(1, &input, sizeof(INPUT));
-			m_last_abs = abs;
+			if (m_background)
+			{
+				PostMouseMsg(hwnd, client_x, client_y, flags);
+				m_last_client = { client_x, client_y };
+			}
+			else
+			{
+				auto abs = ClientToAbsScreen(hwnd, client_x, client_y);
+				INPUT input = {};
+				input.type = INPUT_MOUSE;
+				input.mi.dx = abs.x;
+				input.mi.dy = abs.y;
+				input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK | flags;
+				::SendInput(1, &input, sizeof(INPUT));
+				m_last_abs = abs;
+			}
+		}
+
+		// Send a mouse input at the last known position (for 'up' without coordinates)
+		void SendMouseAtLast(HWND hwnd, DWORD flags)
+		{
+			if (m_background)
+			{
+				PostMouseMsg(hwnd, m_last_client.x, m_last_client.y, flags);
+			}
+			else
+			{
+				INPUT input = {};
+				input.type = INPUT_MOUSE;
+				input.mi.dx = m_last_abs.x;
+				input.mi.dy = m_last_abs.y;
+				input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK | flags;
+				::SendInput(1, &input, sizeof(INPUT));
+			}
 		}
 
 		// Move the cursor and drag through a sequence of client-area points
@@ -185,21 +246,26 @@ namespace conx
 		{
 			if (points.empty()) return;
 
+			auto x0 = static_cast<int>(points[0].first);
+			auto y0 = static_cast<int>(points[0].second);
+
 			// Move to start and press
-			auto abs = ClientToAbsScreen(hwnd, static_cast<int>(points[0].first), static_cast<int>(points[0].second));
-			SendMouse(abs, MOUSEEVENTF_LEFTDOWN);
+			SendMouse(hwnd, x0, y0, MOUSEEVENTF_LEFTDOWN);
 			Sleep(10);
 
 			// Move through intermediate points
 			for (size_t i = 1; i != points.size(); ++i)
 			{
-				abs = ClientToAbsScreen(hwnd, static_cast<int>(points[i].first), static_cast<int>(points[i].second));
-				SendMouse(abs, 0);
+				auto xi = static_cast<int>(points[i].first);
+				auto yi = static_cast<int>(points[i].second);
+				SendMouse(hwnd, xi, yi, 0);
 				Sleep(2);
 			}
 
-			// Release
-			SendMouse(abs, MOUSEEVENTF_LEFTUP);
+			// Release at last point
+			auto xl = static_cast<int>(points.back().first);
+			auto yl = static_cast<int>(points.back().second);
+			SendMouse(hwnd, xl, yl, MOUSEEVENTF_LEFTUP);
 			Sleep(30);
 		}
 
@@ -278,8 +344,7 @@ namespace conx
 				if (tokens.size() < 2) { std::cerr << "move: expected x,y\n"; return -1; }
 				int x, y;
 				if (!ParseXY(tokens[1], x, y)) { std::cerr << std::format("move: invalid coords '{}'\n", tokens[1]); return -1; }
-				auto abs = ClientToAbsScreen(hwnd, x, y);
-				SendMouse(abs, 0);
+				SendMouse(hwnd, x, y, 0);
 				return 0;
 			}
 
@@ -292,10 +357,9 @@ namespace conx
 				auto button = tokens.size() >= 3 ? tokens[2] : std::string("left");
 				DWORD down_flag, up_flag;
 				if (!ResolveButton(button, down_flag, up_flag)) { std::cerr << std::format("click: unknown button '{}'\n", button); return -1; }
-				auto abs = ClientToAbsScreen(hwnd, x, y);
-				SendMouse(abs, down_flag);
+				SendMouse(hwnd, x, y, down_flag);
 				Sleep(10);
-				SendMouse(abs, up_flag);
+				SendMouse(hwnd, x, y, up_flag);
 				Sleep(30);
 				return 0;
 			}
@@ -309,8 +373,7 @@ namespace conx
 				auto button = tokens.size() >= 3 ? tokens[2] : std::string("left");
 				DWORD down_flag, up_flag;
 				if (!ResolveButton(button, down_flag, up_flag)) { std::cerr << std::format("down: unknown button '{}'\n", button); return -1; }
-				auto abs = ClientToAbsScreen(hwnd, x, y);
-				SendMouse(abs, down_flag);
+				SendMouse(hwnd, x, y, down_flag);
 				return 0;
 			}
 
@@ -320,9 +383,7 @@ namespace conx
 				auto button = tokens.size() >= 2 ? tokens[1] : std::string("left");
 				DWORD down_flag, up_flag;
 				if (!ResolveButton(button, down_flag, up_flag)) { std::cerr << std::format("up: unknown button '{}'\n", button); return -1; }
-
-				// Send at last known position
-				SendMouse(m_last_abs, up_flag);
+				SendMouseAtLast(hwnd, up_flag);
 				return 0;
 			}
 
@@ -431,17 +492,28 @@ namespace conx
 				if (text_start == std::string::npos) { std::cerr << "type: expected text\n"; return -1; }
 				auto text = line.substr(text_start);
 
-				for (auto ch : text)
+				if (m_background)
 				{
-					INPUT inputs[2] = {};
-					inputs[0].type = INPUT_KEYBOARD;
-					inputs[0].ki.wScan = static_cast<WORD>(ch);
-					inputs[0].ki.dwFlags = KEYEVENTF_UNICODE;
-					inputs[1].type = INPUT_KEYBOARD;
-					inputs[1].ki.wScan = static_cast<WORD>(ch);
-					inputs[1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-					::SendInput(2, inputs, sizeof(INPUT));
-					Sleep(10);
+					for (auto ch : text)
+					{
+						PostCharMsg(m_key_target, ch);
+						Sleep(10);
+					}
+				}
+				else
+				{
+					for (auto ch : text)
+					{
+						INPUT inputs[2] = {};
+						inputs[0].type = INPUT_KEYBOARD;
+						inputs[0].ki.wScan = static_cast<WORD>(ch);
+						inputs[0].ki.dwFlags = KEYEVENTF_UNICODE;
+						inputs[1].type = INPUT_KEYBOARD;
+						inputs[1].ki.wScan = static_cast<WORD>(ch);
+						inputs[1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+						::SendInput(2, inputs, sizeof(INPUT));
+						Sleep(10);
+					}
 				}
 				return 0;
 			}
@@ -468,21 +540,32 @@ namespace conx
 					vkeys.push_back(vk);
 				}
 
-				// Press all keys down, then release in reverse order
-				for (auto vk : vkeys)
+				if (m_background)
 				{
-					INPUT inp = {};
-					inp.type = INPUT_KEYBOARD;
-					inp.ki.wVk = vk;
-					::SendInput(1, &inp, sizeof(INPUT));
+					// Press all keys down, then release in reverse order
+					for (auto vk : vkeys)
+						PostVKeyDown(m_key_target, vk);
+					for (auto it = vkeys.rbegin(); it != vkeys.rend(); ++it)
+						PostVKeyUp(m_key_target, *it);
 				}
-				for (auto it = vkeys.rbegin(); it != vkeys.rend(); ++it)
+				else
 				{
-					INPUT inp = {};
-					inp.type = INPUT_KEYBOARD;
-					inp.ki.wVk = *it;
-					inp.ki.dwFlags = KEYEVENTF_KEYUP;
-					::SendInput(1, &inp, sizeof(INPUT));
+					// Press all keys down, then release in reverse order
+					for (auto vk : vkeys)
+					{
+						INPUT inp = {};
+						inp.type = INPUT_KEYBOARD;
+						inp.ki.wVk = vk;
+						::SendInput(1, &inp, sizeof(INPUT));
+					}
+					for (auto it = vkeys.rbegin(); it != vkeys.rend(); ++it)
+					{
+						INPUT inp = {};
+						inp.type = INPUT_KEYBOARD;
+						inp.ki.wVk = *it;
+						inp.ki.dwFlags = KEYEVENTF_KEYUP;
+						::SendInput(1, &inp, sizeof(INPUT));
+					}
 				}
 				Sleep(30);
 				return 0;

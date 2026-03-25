@@ -13,17 +13,20 @@ namespace conx
 		{
 			std::cout <<
 				"SendMouse: Send mouse events to a window\n"
-				" Syntax: Conx -send_mouse x,y -b <button-action> -p <process-name> [-w <window-name>]\n"
-				"  -p : Name (or partial name) of the target process\n"
-				"  -w : Title (or partial title) of the target window (default: largest)\n"
-				"  -b : Button action. One of:\n"
-				"       LeftDown, LeftUp, LeftClick\n"
-				"       RightDown, RightUp, RightClick\n"
-				"       MiddleDown, MiddleUp, MiddleClick\n"
-				"       Move\n"
+				" Syntax: Conx -send_mouse x,y -b <button-action> -p <process-name> [-w <window-name>] [-bg]\n"
+				"  -p  : Name (or partial name) of the target process\n"
+				"  -w  : Title (or partial title) of the target window (default: largest)\n"
+				"  -b  : Button action. One of:\n"
+				"        LeftDown, LeftUp, LeftClick\n"
+				"        RightDown, RightUp, RightClick\n"
+				"        MiddleDown, MiddleUp, MiddleClick\n"
+				"        Move\n"
+				"  -bg : Background mode — post WM_ messages directly to the window\n"
+				"        instead of using SendInput. Does not steal focus. Works for\n"
+				"        native Win32 apps; use foreground mode for Electron/Chromium.\n"
 				"\n"
-				"  Brings the window to the foreground and uses SendInput for\n"
-				"  hardware-level mouse simulation.\n"
+				"  Without -bg, brings the window to the foreground and uses SendInput\n"
+				"  for hardware-level mouse simulation.\n"
 				"  x,y are coordinates relative to the window's client area.\n"
 				"  'Click' actions send a button-down followed by a button-up.\n";
 		}
@@ -54,6 +57,8 @@ namespace conx
 			std::string window_name;
 			if (args.count("w") != 0) { window_name = args("w").as<std::string>(); }
 
+			bool background = args.count("bg") != 0;
+
 			if (button_action.empty()) { std::cerr << "No button action provided (-b)\n"; return ShowHelp(), -1; }
 			if (process_name.empty())  { std::cerr << "No process name provided (-p)\n"; return ShowHelp(), -1; }
 
@@ -65,38 +70,64 @@ namespace conx
 				return -1;
 			}
 
-			// Convert client coordinates to absolute screen coordinates for SendInput
-			auto abs = ClientToAbsScreen(hwnd, x, y);
-
 			// Lowercase the action for case-insensitive matching
 			auto action = button_action;
 			std::transform(action.begin(), action.end(), action.begin(), [](char c) { return static_cast<char>(tolower(c)); });
 
-			// Print status before bringing the target to the foreground,
-			// otherwise writing to the console can steal focus back.
-			std::cout << std::format("Sending mouse {} at ({},{}) to '{}'\n", button_action, x, y, GetWindowTitle(hwnd));
+			// Print status before any foreground activation
+			auto mode = background ? "bg" : "fg";
+			std::cout << std::format("Sending mouse {} at ({},{}) to '{}' [{}]\n", button_action, x, y, GetWindowTitle(hwnd), mode);
 			std::cout.flush();
 
-			// Bring the target window to the foreground
-			BringToForeground(hwnd);
-
-			if      (action == "leftdown")    { SendMouseInput(abs, MOUSEEVENTF_LEFTDOWN); }
-			else if (action == "leftup")      { SendMouseInput(abs, MOUSEEVENTF_LEFTUP); }
-			else if (action == "leftclick")   { SendMouseInput(abs, MOUSEEVENTF_LEFTDOWN);
-			                                    SendMouseInput(abs, MOUSEEVENTF_LEFTUP); }
-			else if (action == "rightdown")   { SendMouseInput(abs, MOUSEEVENTF_RIGHTDOWN); }
-			else if (action == "rightup")     { SendMouseInput(abs, MOUSEEVENTF_RIGHTUP); }
-			else if (action == "rightclick")  { SendMouseInput(abs, MOUSEEVENTF_RIGHTDOWN);
-			                                    SendMouseInput(abs, MOUSEEVENTF_RIGHTUP); }
-			else if (action == "middledown")  { SendMouseInput(abs, MOUSEEVENTF_MIDDLEDOWN); }
-			else if (action == "middleup")    { SendMouseInput(abs, MOUSEEVENTF_MIDDLEUP); }
-			else if (action == "middleclick") { SendMouseInput(abs, MOUSEEVENTF_MIDDLEDOWN);
-			                                    SendMouseInput(abs, MOUSEEVENTF_MIDDLEUP); }
-			else if (action == "move")        { SendMouseInput(abs, 0); }
+			if (background)
+			{
+				// Background mode: post WM_ messages directly (auto-resolves child window)
+				if      (action == "leftdown")    { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_LEFTDOWN); }
+				else if (action == "leftup")      { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_LEFTUP); }
+				else if (action == "leftclick")   { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_LEFTDOWN);
+				                                    Sleep(10);
+				                                    PostMouseMsg(hwnd, x, y, MOUSEEVENTF_LEFTUP); }
+				else if (action == "rightdown")   { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_RIGHTDOWN); }
+				else if (action == "rightup")     { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_RIGHTUP); }
+				else if (action == "rightclick")  { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_RIGHTDOWN);
+				                                    Sleep(10);
+				                                    PostMouseMsg(hwnd, x, y, MOUSEEVENTF_RIGHTUP); }
+				else if (action == "middledown")  { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_MIDDLEDOWN); }
+				else if (action == "middleup")    { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_MIDDLEUP); }
+				else if (action == "middleclick") { PostMouseMsg(hwnd, x, y, MOUSEEVENTF_MIDDLEDOWN);
+				                                    Sleep(10);
+				                                    PostMouseMsg(hwnd, x, y, MOUSEEVENTF_MIDDLEUP); }
+				else if (action == "move")        { PostMouseMsg(hwnd, x, y, 0); }
+				else
+				{
+					std::cerr << std::format("Unknown button action '{}'\n", button_action);
+					return ShowHelp(), -1;
+				}
+			}
 			else
 			{
-				std::cerr << std::format("Unknown button action '{}'\n", button_action);
-				return ShowHelp(), -1;
+				// Foreground mode: bring to front and use SendInput
+				auto abs = ClientToAbsScreen(hwnd, x, y);
+				BringToForeground(hwnd);
+
+				if      (action == "leftdown")    { SendMouseInput(abs, MOUSEEVENTF_LEFTDOWN); }
+				else if (action == "leftup")      { SendMouseInput(abs, MOUSEEVENTF_LEFTUP); }
+				else if (action == "leftclick")   { SendMouseInput(abs, MOUSEEVENTF_LEFTDOWN);
+				                                    SendMouseInput(abs, MOUSEEVENTF_LEFTUP); }
+				else if (action == "rightdown")   { SendMouseInput(abs, MOUSEEVENTF_RIGHTDOWN); }
+				else if (action == "rightup")     { SendMouseInput(abs, MOUSEEVENTF_RIGHTUP); }
+				else if (action == "rightclick")  { SendMouseInput(abs, MOUSEEVENTF_RIGHTDOWN);
+				                                    SendMouseInput(abs, MOUSEEVENTF_RIGHTUP); }
+				else if (action == "middledown")  { SendMouseInput(abs, MOUSEEVENTF_MIDDLEDOWN); }
+				else if (action == "middleup")    { SendMouseInput(abs, MOUSEEVENTF_MIDDLEUP); }
+				else if (action == "middleclick") { SendMouseInput(abs, MOUSEEVENTF_MIDDLEDOWN);
+				                                    SendMouseInput(abs, MOUSEEVENTF_MIDDLEUP); }
+				else if (action == "move")        { SendMouseInput(abs, 0); }
+				else
+				{
+					std::cerr << std::format("Unknown button action '{}'\n", button_action);
+					return ShowHelp(), -1;
+				}
 			}
 
 			return 0;
