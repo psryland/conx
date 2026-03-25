@@ -92,8 +92,8 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(ProjectDir).github\skills\conx-automation\conx.exe"</Command>
-      <Message>Copying conx.exe to .github/skills/conx-automation/</Message>
+      <Command>copy /Y "$(TargetPath)" "$(USERPROFILE)\.copilot\skills\conx\conx.exe"</Command>
+      <Message>Copying conx.exe to user skills directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <!--

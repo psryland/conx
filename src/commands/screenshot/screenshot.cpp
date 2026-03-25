@@ -18,13 +18,16 @@ namespace conx
 		{
 			std::cout <<
 				"Screenshot: Capture windows of a process\n"
-				" Syntax: Conx -screenshot -p <process-name> -o <output-directory> [-all] [-bitblt] [-scale N]\n"
+				" Syntax: Conx -screenshot -p <process-name> -o <output-directory> [-all] [-bitblt] [-bg] [-scale N]\n"
 				"  -p      : Name (or partial name) of the process to capture\n"
 				"  -o      : Output directory for captured PNG images\n"
 				"  -all    : Also capture hidden/minimised windows\n"
 				"  -bitblt : Capture from the screen DC instead of using PrintWindow.\n"
 				"            Works for GPU-rendered apps (e.g. Electron/Chromium) but\n"
-				"            requires the window to be visible and in the foreground.\n"
+				"            requires the window to be visible and unoccluded.\n"
+				"  -bg     : (With -bitblt) Raise the window above others without stealing\n"
+				"            input focus, then restore its z-order after capture. Without\n"
+				"            this flag, -bitblt requires the window to already be visible.\n"
 				"  -scale  : Scale factor for the output image (e.g. 0.25 for quarter size)\n"
 				"\n"
 				"  Output files are named <process-name>.<window-title>.png\n"
@@ -55,6 +58,7 @@ namespace conx
 
 			auto include_hidden = args.count("all") != 0;
 			auto use_bitblt     = args.count("bitblt") != 0;
+			auto background     = args.count("bg") != 0;
 			auto scale          = args.count("scale") != 0 ? args("scale").as<double>() : 1.0;
 
 			// Ensure the output directory exists
@@ -100,7 +104,7 @@ namespace conx
 				++count;
 
 				auto filepath = outdir / filename;
-				if (CaptureWindow(hwnd, filepath, use_bitblt, scale))
+				if (CaptureWindow(hwnd, filepath, use_bitblt, background, scale))
 				{
 					std::cout << std::format("Captured: {}\n", filename);
 					++captured;
@@ -169,7 +173,7 @@ namespace conx
 		}
 
 		// Capture a window to a PNG file
-		static bool CaptureWindow(HWND hwnd, std::filesystem::path const& filepath, bool use_bitblt, double scale)
+		static bool CaptureWindow(HWND hwnd, std::filesystem::path const& filepath, bool use_bitblt, bool background, double scale)
 		{
 			RECT rc;
 			if (!GetWindowRect(hwnd, &rc))
@@ -179,6 +183,21 @@ namespace conx
 			auto h = rc.bottom - rc.top;
 			if (w <= 0 || h <= 0)
 				return false;
+
+			// In background + bitblt mode, temporarily make the window topmost so it's
+			// unoccluded for screen capture, without activating it (no focus steal).
+			// HWND_TOP alone isn't enough — DWM doesn't reliably honour z-order changes
+			// for inactive windows. HWND_TOPMOST is the only reliable way to ensure the
+			// window is truly on top for BitBlt.
+			HWND prev_zorder = nullptr;
+			if (use_bitblt && background)
+			{
+				prev_zorder = GetWindow(hwnd, GW_HWNDPREV);
+				SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+				// Let DWM composite the new z-order before we capture
+				Sleep(200);
+			}
 
 			// Create a memory DC and bitmap for the full-size capture
 			auto hdc_screen = GetDC(nullptr);
@@ -236,6 +255,15 @@ namespace conx
 					Gdiplus::Bitmap bmp(hbm, nullptr);
 					saved = SaveBitmapAsPng(bmp, filepath) == Gdiplus::Ok;
 				}
+			}
+
+			// Restore the window's z-order if we raised it. First remove the topmost
+			// flag, then put it back behind its original predecessor.
+			if (use_bitblt && background)
+			{
+				SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+				if (prev_zorder)
+					SetWindowPos(hwnd, prev_zorder, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 			}
 
 			// Clean up GDI resources

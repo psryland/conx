@@ -111,7 +111,7 @@ msbuild conx.vcxproj /p:Configuration=Release /p:Platform=x64
 
 Output: `obj/x64/Release/conx.exe`
 
-A Release build automatically copies `conx.exe` to `.github/skills/conx-automation/` for the Copilot CLI skill.
+A Release build automatically copies `conx.exe` to `%USERPROFILE%\.copilot\skills\conx\` for the Copilot CLI skill.
 
 ### Test
 
@@ -123,7 +123,7 @@ Runs smoke tests for all commands.
 
 ## Copilot CLI Skill
 
-This repo includes a [Copilot CLI skill](https://docs.github.com/copilot/how-tos/copilot-cli/customize-copilot/create-skills) at `.github/skills/conx-automation/` that teaches GitHub Copilot CLI how to use conx for GUI automation tasks. The skill bundles the `conx.exe` binary alongside a `SKILL.md` reference.
+This repo includes a [Copilot CLI skill](https://docs.github.com/copilot/how-tos/copilot-cli/customize-copilot/create-skills) at `%USERPROFILE%\.copilot\skills\conx\` that teaches GitHub Copilot CLI how to use conx for GUI automation tasks. The skill bundles the `conx.exe` binary alongside a `SKILL.md` reference.
 
 ## License
 
